@@ -1,0 +1,72 @@
+ 分层构建 联合挂载
+6钟名称空间 Utc,user,mount,ipc,pid,net
+docker pull nginx
+docker image ls (--no-trunc 显示完整信息)
+docker image remove / rmi (remove images)
+rm (remove containers)
+docker container create/run/start/stop/pause/unpause/ls
+docker run 	--rm 结束删除
+			-t 	 终端 
+			-i   交互式
+			--name 名字
+			--networt 网络
+			--networt container:容器名   和另一容器公用同一网络
+			--networt host 和宿主机共用网络
+			-d 启动后运行在后台
+docker run --name b1 -it busybox (创建busybox容器并进入终端)
+
+docker inspect b1
+docker ps (-a)
+docker start -ai b1
+	-a attach 附加
+	-i interactive 交互
+docker stop/kill  -15/-9信号  释放资源后停止/立即停止
+docker exec -it b1 (/bin/sh） 外部进入容器
+docker logs b1
+docker commit -p(暂停) b1
+docker commit -a 加作者信息
+			  -c 更改默认执行命令
+docker commit -a "aaa" -c 'CMD ["/bin/httpd","-f","-h","/data/html"]' -p b1 a/b:v0.1
+											 -f 运行在前台
+											 -h 指定运行目录
+docker tag (image id) a/b:v0.1  (仓库名:tag)
+docker push 推送镜像
+docker login 登录服务器
+docker save -o my.gz a/b:v0.1 a/b:v0.2
+docker load -i my.gz
+brctl show 
+ip link show
+ip link set dev a name b 
+iptables -t nat -vnL
+ip netns help
+ip netns list/add/set/link 
+docker run --name b1 -it --network bridge （-h  aaa.bb（指定hostname）) --rm busybox
+			--network a/b  复制a/b的网络
+			--dns 114.114.114.114
+			--dns-search (搜索域)
+			--add-host www.baidu.com:8.8.8.8
+			-p 80 将80端口暴露为本机的一个动态端口，使用iptable查询iptables -t nat -vnL或者(docker ports 容器名)
+			-p 192.168.1.2::80 将80端口暴露为本机ip为192.168.1.2的一个动态端口
+			-p 80:80 
+			-p 192.168.1.2:8080:80 80暴露给主机的8080
+			-P 所有端口
+自定义docker0桥网络属性信息，/etc/docker/daemon.json 
+	"bip": "192.168.0.0/16"
+监听其他服务器docker服务/etc/docker/daemon.json 
+开启端口供监听	"hosts": ["tcp://0.0.0.0:2375", "unix:///var/run/docker.sock"]
+docker -H 172.20.0.1:2375 ps
+docker -H 172.20.0.1:2375 image ls
+docker network create -d bridge --subnet "172.26.0.0/16" --subnet "172.26.0.1" mybr0
+cat /proc/sys/net/ipv4/ip_forward   == 1  打开核心转发  宿主机上新建的两台虚拟交换机属于不同网段可以互相访问  但是要注意iptables的阻断
+没指定绑定目录，由docker管理:
+docker run -it -name bbox1 -v /data busybox
+指定绑定目录:
+docker run -v HOSTDIR:VOLUMEDIR --name bbox2 busybox (可以多个容器使用同一卷设置)
+在docker info里进行查找:
+docker inspect -f {{.Mounts}} b2
+docker inspect -f {{.NetworkSettings.IPAddress}}
+docker run -it --name bbox2 --volumes-from bbox1 busybox (bbox2复制bbox1卷设置 )
+
+
+
+
