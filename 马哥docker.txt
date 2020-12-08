@@ -49,7 +49,7 @@ docker run --name b1 -it --network bridge （-h  aaa.bb（指定hostname）) --r
 			-p 192.168.1.2::80 将80端口暴露为本机ip为192.168.1.2的一个动态端口
 			-p 80:80 
 			-p 192.168.1.2:8080:80 80暴露给主机的8080
-			-P 所有端口
+			-P 所有EXPOSE中设定的端口
 自定义docker0桥网络属性信息，/etc/docker/daemon.json 
 	"bip": "192.168.0.0/16"
 监听其他服务器docker服务/etc/docker/daemon.json 
@@ -66,6 +66,140 @@ docker run -v HOSTDIR:VOLUMEDIR --name bbox2 busybox (可以多个容器使用�
 docker inspect -f {{.Mounts}} b2
 docker inspect -f {{.NetworkSettings.IPAddress}}
 docker run -it --name bbox2 --volumes-from bbox1 busybox (bbox2复制bbox1卷设置 )
+
+Dockerfile 
+#comment
+FROM budybox:latest
+
+ENV
+${variable:-word}
+${variable:+word}
+
+echo {NAME:-TOM}
+	TOM
+NAME=jerry
+echo $(NAME:-TOM)
+jerry
+echo $(NAME:+TOM)
+	TOM
+unset NAME
+echo ${NAME:+TOM}
+	
+FROM <repo>:[tag]
+FROM <repo>@<digest> 哈希
+
+MAINTAINER "mage <mage@166.com>"
+
+LABEL <key>=<value>
+
+COPY <SRC>...<dest>
+COPY ["src",..."dest"]
+SRC是目录，则复制其中文件，SRC本身不会复制
+ 
+docker build -t http:v0.1 ./
+
+ADD <src>...<dest>
+ADD ["SRC","dest"]
+1.同COPY
+2.src可为url，dest不以/直接保存创建为dest，以/结尾保存为dest/filename
+3.src为压缩文件，则被展开为目录 url则不会展开
+4.<>src
+有多个或其间接或直接使用通配符，则<dest>必须以/结尾的路径，如果不以/结尾则视为普通文件，<src>内容被写入dest
+
+WORKDIR 为所有RUN,CMD,ENTRYPOINT,COPY,ADD指定工作目录
+
+VOLUME <mountpoint>
+VOLUME ["mountpoint"]
+挂载点之前有文件存在，则会在挂在完成后将侧前的文件复制到新的挂载卷中
+
+EXPOSE 11211/udp 11211/tcp
+默认为tcp 
+只有在启用docker run -P 才会暴露
+
+ENV <key> <value> (<value>...)
+ENV <key>=<value>
+第一种key之后所有内容都是value的组成部分，一次只能设置一个变量
+第二种一次可以设置多个，value中的空格可以用\转义，也可以加引号进行标识；\也可用于续行
+启动后在shell中存在
+docker run ..... -e aaa="bbb" 启动时定义环境变量，可替换dockerfile中env定义的初始环境变量
+
+RUN <command>
+RUN ["executable","param1","param2"]
+第一种中，command是一个shell命令，以"/bin/sh -c“来运行，意味着PID不为1，不能接受UNIX信号，当dockerstop停止容器时，接收不到SIGTERM信号
+第二种不会以"/bin/sh -c"来运行，所以通配符以及变量替换不会进行，需要时可用下列命令代替
+RUN ["/bin/bash","-c","exec","param"]
+
+CMD 在启动时运行
+CMD <command>
+CMD ["exec","<para1>","<para2>"]
+CMD ["<para1>","<para2>"]
+第三种位ENTRYPOINT命令提供默认参数
+
+(Dockerfile详解08)
+
+Registry用于保存容器镜像
+包名docker-distribution
+yum instsall docker-registry
+
+rpm -ql docker-distribution 
+查看包安装文件
+
+sysctl start docker dis..
+上传到私有仓库 要打标签
+docker tag myweb:v0.1 node02.com:5000/myweb:v0.1
+docker push  myweb:v0.1 node02.com:5000/myweb:v0.1
+会存在http和httpss问题
+在docker deamon 中编辑"inscure-registries":[node02.com:5000]
+systemctl restart docker
+harbor docker私有仓库管理
+docker compose
+yum info docker-compose
+
+限制docker容器资源
+
+内存
+--memory\
+-m 4m
+--memory-swap * 必须先设置-m
+--memory-swap 为S --memory 为M
+总可用空间为S，ram为M，swap为S-M，若S=M则无swap空间
+--memory-swap 为0 --memory 为M
+相当于swap为unset
+--memory-unset 为0 --memory 为M
+若主机启用了swap，则容器可用swap为2*M
+--memory-swap 为-1 --memory 为M
+
+容器内free查看的swap不代表其意义，可能是宿主机的纵总空间
+
+--memory-reservation 预留空间
+--oom-kill-disable 若等于true则禁止容器因为oom被杀掉
+--memory-swappiness ...
+ 
+--cpu-shares 共享式，按比例分cpu资源
+--cpus=<value> 限制物理cpu核数
+--cpuset-cpus 制定具体哪个核心
+--cpuset-cpus 0,1
+
+docker stress test
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
